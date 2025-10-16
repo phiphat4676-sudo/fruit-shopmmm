@@ -1,1 +1,477 @@
-# fruit-shopmmm
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ร้านน้ำผลไม้สด — Minimal</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --muted:#7b7f86; --text:#0f1724;
+  } 
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', Arial; background:var(--bg); color:var(--text)}
+  .container{max-width:1100px;margin:28px auto;padding:0 20px}
+  header{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+  .brand{font-weight:800; font-size:20px}
+  .sub{font-size:13px;color:var(--muted)}
+  .btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+  .btn.primary{background:var(--text);color:#fff;border:none}
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:20px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{order:-1}}
+
+  /* products */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+  .card{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 6px 20px rgba(12,20,40,0.06);display:flex;flex-direction:column}
+  .thumb{height:160px;border-radius:10px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .title{margin-top:12px;font-weight:700}
+  .desc{color:var(--muted);margin-top:6px;font-size:13px}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+
+  /* sidebar */
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 8px 24px rgba(12,20,40,0.04)}
+  .cart-list{margin-top:8px; max-height:360px; overflow:auto}
+  .cart-item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed rgba(0,0,0,0.05)}
+  .qty{padding:6px 8px;border-radius:8px;background:#f1f2f6}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* overlay modal */
+  .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,10,18,0.45);z-index:80;padding:16px}
+  .overlay.open{display:flex}
+  .modal{width:100%;max-width:420px;background:var(--card);border-radius:12px;padding:18px;box-shadow:0 12px 40px rgba(12,20,40,0.12);position:relative}
+  .close-x{position:absolute;right:12px;top:10px;cursor:pointer;color:var(--muted);font-size:20px}
+  input,textarea,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e8eaf0;margin-top:8px}
+  .small-row{display:flex;gap:8px}
+  .small-row .half{flex:1}
+  footer{max-width:1100px;margin:24px auto;padding:12px 20px;color:var(--muted);font-size:13px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="brand">ร้านน้ำผลไม้สด <span class="muted">— Minimal</span></div>
+        <div class="sub">สด สะอาด เสิร์ฟเรียบหรู</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="userArea"></div>
+        <button class="btn" id="openCartBtn">ตะกร้า (<span id="cartCount">0</span>)</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div><h2 style="margin:0">น้ำผลไม้</h2><div class="muted" style="margin-top:6px">เลือกสินค้าแล้วกดใส่ตะกร้า</div></div>
+          <div class="muted">เข้าสู่ระบบ: <span id="loggedLabel">ไม่ล็อกอิน</span></div>
+        </div>
+
+        <div class="grid" id="productGrid"></div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><strong>ตะกร้าสินค้า</strong></div>
+            <div class="muted">(<span id="cartCountSide">0</span>)</div>
+          </div>
+
+          <div class="cart-list" id="cartList"><div class="muted" style="padding:12px 0">ยังไม่มีสินค้าในตะกร้า</div></div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <div class="muted">รวมทั้งหมด</div>
+            <div><strong id="cartTotal">0.00 ฿</strong></div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn primary" id="btnCheckout" disabled>ชำระเงิน</button>
+            <button class="btn" id="btnClear">ล้าง</button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="panel" style="margin-top:12px">
+          <strong>บัญชี</strong>
+          <div id="accountInfo" class="muted" style="margin-top:8px">ยังไม่ได้ล็อกอิน</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div>Demo — ข้อมูลเก็บในเครื่อง (localStorage/sessionStorage)</div>
+      <div class="muted">ผู้จัดทำเว็บไซต์โดย <strong>พิพัฒน์ รอดเพ็ชร</strong></div>
+    </footer>
+  </div>
+
+  <!-- Auth popup (overlay) -->
+  <div id="authOverlay" class="overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <span class="close-x" id="authClose">&times;</span>
+      <h3 id="authHeading">เข้าสู่ระบบ</h3>
+      <p class="muted" id="authNote">กรุณาเข้าสู่ระบบหรือสมัครสมาชิกเพื่อสั่งซื้อ (จำลอง)</p>
+
+      <div style="margin-top:12px">
+        <input id="authEmail" type="email" placeholder="อีเมล" />
+        <input id="authPass" type="password" placeholder="รหัสผ่าน (อย่างน้อย 6 ตัว)" />
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn primary" id="authSubmit">เข้าสู่ระบบ</button>
+          <button class="btn" id="authToggle">สมัครสมาชิก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout overlay -->
+  <div id="checkoutOverlay" class="overlay">
+    <div class="modal">
+      <span class="close-x" id="checkoutClose">&times;</span>
+      <h3>ข้อมูลการจัดส่ง & ชำระเงิน</h3>
+      <form id="checkoutForm">
+        <input id="fullName" placeholder="ชื่อ-นามสกุล" required />
+        <input id="phone" placeholder="เบอร์โทรศัพท์" required />
+        <textarea id="address" rows="3" placeholder="ที่อยู่จัดส่ง" required></textarea>
+        <select id="payMethod">
+          <option value="bank">โอนผ่านธนาคาร</option>
+          <option value="cod">เก็บเงินปลายทาง</option>
+        </select>
+        <div style="background:#f7f8fb;padding:10px;border-radius:8px;margin-top:8px" id="bankInfo">
+          โอนเข้าบัญชี: ธนาคารตัวอย่าง | เลขที่บัญชี: 012-345-6789 | ชื่อ: ร้านน้ำผลไม้
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn primary" type="submit">ยืนยันคำสั่งซื้อ</button>
+          <button class="btn" type="button" id="checkoutCancel">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+/* ---------- Data: products (Pixabay images) ---------- */
+const PRODUCTS = [
+  {
+    id: 'p_orange',
+    title: 'น้ำส้มคั้นสด',
+    desc: 'วิตามินซีสูง สดจากสวน สดชื่นทุกแก้ว',
+    price: 65.00,
+    img: 'https://s359.kapook.com/pagebuilder/3c09c1ab-5e43-49db-99af-a985a2d8c61b.jpg'
+  },
+  {
+    id: 'p_watermelon',
+    title: 'น้ำแตงโม',
+    desc: 'หวานฉ่ำ ช่วยดับกระหาย',
+    price: 55.00,
+    img: 'https://img.wongnai.com/p/1920x0/2019/03/26/86eb7649b17d4f0383a6e584f305506c.jpg'
+  },
+  {
+    id: 'p_mango',
+    title: 'น้ำมะม่วง',
+    desc: 'อุดมด้วยวิตามินเอ ช่วยบำรุงสายตา',
+    price: 95.00,
+    img: 'https://smoosh.me/wp-content/uploads/2025/04/%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%A1%E0%B8%B0%E0%B8%A1%E0%B9%88%E0%B8%A7%E0%B8%87.webp'
+  },
+  {
+    id: 'p_kiwi',
+    title: 'น้ำกีวี่ผสมแอปเปิ้ล',
+    desc: 'รสเปรี้ยวอมหวาน สดใสทุกแก้ว',
+    price: 70.00,
+    img: 'https://png.pngtree.com/png-vector/20231110/ourlarge/pngtree-apple-and-kiwi-smoothie-on-white-healthy-png-image_10420978.png'
+  },
+  {
+    id: 'p_grape',
+    title: 'น้ำองุ่นเข้มข้น',
+    desc: 'องุ่นสีม่วงเข้ม หวานธรรมชาติ อัดแน่นสารต้านอนุมูลอิสระ',
+    price: 80.00,
+    img: 'https://media.istockphoto.com/id/1455706684/th/%E0%B8%A3%E0%B8%B9%E0%B8%9B%E0%B8%96%E0%B9%88%E0%B8%B2%E0%B8%A2/%E0%B8%99%E0%B9%89%E0%B9%8D%E0%B8%B2%E0%B8%AD%E0%B8%87%E0%B8%B8%E0%B9%88%E0%B8%99%E0%B8%84%E0%B8%B1%E0%B9%89%E0%B8%99%E0%B8%AA%E0%B8%94%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88%E0%B8%9A%E0%B8%99%E0%B9%82%E0%B8%95%E0%B9%8A%E0%B8%B0%E0%B9%84%E0%B8%A1%E0%B9%89%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B8%8A%E0%B8%99%E0%B8%9A%E0%B8%97-%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B9%80%E0%B8%9E%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%AA%E0%B8%B8%E0%B8%82%E0%B8%A0%E0%B8%B2%E0%B8%9E.jpg?s=612x612&w=0&k=20&c=W3OGgsEAnqQv2lJioBBN3A2nhWhDJTtb8oJhLNZ1O08=' // สีม่วงเข้ม
+  }
+];
+
+/* ---------- State ---------- */
+let cart = []; // {id, title, price, qty}
+let user = null; // login stored in sessionStorage only (ephemeral)
+let isRegisterMode = false;
+
+/* ---------- DOM refs ---------- */
+const productGrid = document.getElementById('productGrid');
+const cartListEl = document.getElementById('cartList');
+const cartCountEl = document.getElementById('cartCount');
+const cartCountSideEl = document.getElementById('cartCountSide');
+const cartTotalEl = document.getElementById('cartTotal');
+const btnCheckout = document.getElementById('btnCheckout');
+const btnClear = document.getElementById('btnClear');
+
+const authOverlay = document.getElementById('authOverlay');
+const authSubmit = document.getElementById('authSubmit');
+const authToggle = document.getElementById('authToggle');
+const authClose = document.getElementById('authClose');
+const authHeading = document.getElementById('authHeading');
+const authEmail = document.getElementById('authEmail');
+const authPass = document.getElementById('authPass');
+
+const userArea = document.getElementById('userArea');
+const loggedLabel = document.getElementById('loggedLabel');
+
+const openCartBtn = document.getElementById('openCartBtn');
+const checkoutOverlay = document.getElementById('checkoutOverlay');
+const checkoutClose = document.getElementById('checkoutClose');
+const checkoutForm = document.getElementById('checkoutForm');
+const checkoutCancel = document.getElementById('checkoutCancel');
+const payMethod = document.getElementById('payMethod');
+
+/* ---------- Helpers ---------- */
+function money(n){ return Number(n).toFixed(2) + ' ฿' }
+
+function saveCart(){
+  // cart kept in memory and optionally in localStorage for demo persistence of cart items
+  try { localStorage.setItem('demo_cart', JSON.stringify(cart)) } catch(e){/* ignore */}
+}
+
+function loadCart(){
+  try{
+    const data = JSON.parse(localStorage.getItem('demo_cart') || '[]');
+    cart = Array.isArray(data) ? data : [];
+  }catch(e){ cart = [] }
+}
+
+/* ---------- Render ---------- */
+function renderProducts(){
+  productGrid.innerHTML = PRODUCTS.map(p => `
+    <div class="card">
+      <div class="thumb"><img src="${p.img}" alt="${escapeHtml(p.title)}"></div>
+      <div class="title">${escapeHtml(p.title)}</div>
+      <div class="desc">${escapeHtml(p.desc)}</div>
+      <div class="foot">
+        <div class="price">${money(p.price)}</div>
+        <div><button class="btn" data-id="${p.id}">ใส่ตะกร้า</button></div>
+      </div>
+    </div>
+  `).join('');
+  // attach add-to-cart handlers
+  productGrid.querySelectorAll('button[data-id]').forEach(b => {
+    b.addEventListener('click', () => {
+      const id = b.getAttribute('data-id');
+      addToCartHandler(id);
+    });
+  });
+}
+
+function renderCart(){
+  if(cart.length === 0){
+    cartListEl.innerHTML = '<div class="muted" style="padding:12px 0">ยังไม่มีสินค้าในตะกร้า</div>';
+  } else {
+    cartListEl.innerHTML = cart.map(item => `
+      <div class="cart-item">
+        <div style="flex:1">
+          <div style="font-weight:700">${escapeHtml(item.title)}</div>
+          <div class="muted">${money(item.price)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="display:flex; gap:6px; justify-content:flex-end; align-items:center">
+            <button class="btn" data-act="minus" data-id="${item.id}">−</button>
+            <div class="qty">${item.qty}</div>
+            <button class="btn" data-act="plus" data-id="${item.id}">+</button>
+            <button class="btn" data-act="remove" data-id="${item.id}">ลบ</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    // attach handlers
+    cartListEl.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', () => {
+        const act = b.getAttribute('data-act');
+        const id = b.getAttribute('data-id');
+        if(act === 'minus'){ changeQty(id, -1) }
+        else if(act === 'plus'){ changeQty(id, +1) }
+        else if(act === 'remove'){ removeFromCart(id) }
+      });
+    });
+  }
+  const total = cart.reduce((s,i)=> s + i.price * i.qty, 0);
+  cartTotalEl.textContent = money(total);
+  cartCountEl.textContent = cart.reduce((s,i)=> s + i.qty, 0);
+  cartCountSideEl.textContent = cart.reduce((s,i)=> s + i.qty, 0);
+  btnCheckout.disabled = cart.length === 0;
+  saveCart();
+}
+
+/* ---------- Cart actions ---------- */
+function addToCartHandler(id){
+  if(!isLoggedIn()){
+    showAuth();
+    return;
+  }
+  const prod = PRODUCTS.find(p => p.id === id);
+  if(!prod) return;
+  const found = cart.find(c => c.id === id);
+  if(found) found.qty += 1;
+  else cart.push({ id: prod.id, title: prod.title, price: prod.price, qty: 1 });
+  renderCart();
+  toast('เพิ่มสินค้าในตะกร้าแล้ว');
+}
+
+function removeFromCart(id){
+  cart = cart.filter(i => i.id !== id);
+  renderCart();
+}
+
+function changeQty(id, delta){
+  const it = cart.find(i => i.id === id);
+  if(!it) return;
+  it.qty = Math.max(1, it.qty + delta);
+  renderCart();
+}
+
+/* ---------- Auth (localStorage for accounts, sessionStorage for session) ---------- */
+function isLoggedIn(){
+  try{
+    return !!JSON.parse(sessionStorage.getItem('demo_session'));
+  }catch(e){ return false }
+}
+
+function currentUserEmail(){
+  const s = JSON.parse(sessionStorage.getItem('demo_session') || 'null');
+  return s ? s.email : null;
+}
+
+function renderAuthUI(){
+  const userEmail = currentUserEmail();
+  const ua = userArea;
+  ua.innerHTML = '';
+  if(userEmail){
+    const el = document.createElement('div');
+    el.textContent = userEmail;
+    el.style.padding = '6px 10px'; el.style.borderRadius='10px'; el.style.background='#0f1724'; el.style.color='#fff'; el.style.fontWeight='700';
+    ua.appendChild(el);
+    const out = document.createElement('button'); out.className='btn'; out.style.marginLeft='8px'; out.textContent='ออกจากระบบ';
+    out.onclick = ()=> { sessionStorage.removeItem('demo_session'); renderAuthUI(); updateAccountInfo(); };
+    ua.appendChild(out);
+    loggedLabel.textContent = 'ล็อกอินแล้ว';
+    document.getElementById('accountInfo').textContent = 'ล็อกอินด้วย: ' + userEmail;
+  } else {
+    const open = document.createElement('button'); open.className='btn primary'; open.textContent='เข้าสู่ระบบ / สมัคร';
+    open.onclick = showAuth;
+    ua.appendChild(open);
+    loggedLabel.textContent = 'ไม่ล็อกอิน';
+    document.getElementById('accountInfo').textContent = 'ยังไม่ได้ล็อกอิน';
+  }
+}
+
+/* ---------- Auth flow handlers ---------- */
+authToggle.addEventListener('click', () => {
+  isRegisterMode = !isRegisterMode;
+  authHeading.textContent = isRegisterMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  authSubmit.textContent = isRegisterMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ';
+  authToggle.textContent = isRegisterMode ? 'มีบัญชีแล้ว? เข้าสู่ระบบ' : 'ยังไม่มีบัญชี? สมัครสมาชิก';
+});
+
+authClose.addEventListener('click', () => authOverlay.classList.remove('open'));
+function showAuth(){ 
+  // clear fields
+  authEmail.value = ''; authPass.value = '';
+  isRegisterMode = false;
+  authHeading.textContent = 'เข้าสู่ระบบ';
+  authSubmit.textContent = 'เข้าสู่ระบบ';
+  authToggle.textContent = 'ยังไม่มีบัญชี? สมัครสมาชิก';
+  authOverlay.classList.add('open') 
+}
+
+authSubmit.addEventListener('click', () => {
+  const email = (authEmail.value || '').trim().toLowerCase();
+  const pass = authPass.value || '';
+  if(!email || !pass){ alert('กรุณากรอกอีเมลและรหัสผ่าน'); return; }
+  if(isRegisterMode){
+    // register: save to localStorage users
+    const users = JSON.parse(localStorage.getItem('demo_users') || '[]');
+    if(users.find(u=>u.email === email)){ alert('อีเมลนี้มีผู้ใช้แล้ว'); return; }
+    users.push({ email, pass });
+    localStorage.setItem('demo_users', JSON.stringify(users));
+    alert('สมัครสมาชิกสำเร็จ! โปรดล็อกอิน');
+    isRegisterMode = false;
+    authHeading.textContent = 'เข้าสู่ระบบ'; authSubmit.textContent='เข้าสู่ระบบ'; authToggle.textContent='ยังไม่มีบัญชี? สมัครสมาชิก';
+    return;
+  } else {
+    // login
+    const users = JSON.parse(localStorage.getItem('demo_users') || '[]');
+    const u = users.find(x=> x.email === email && x.pass === pass);
+    if(!u){ alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง'); return; }
+    // set session (ephemeral)
+    sessionStorage.setItem('demo_session', JSON.stringify({ email, loggedAt: Date.now() }));
+    authOverlay.classList.remove('open');
+    renderAuthUI();
+    toast('เข้าสู่ระบบสำเร็จ');
+  }
+});
+
+/* ---------- Cart btn & checkout ---------- */
+openCartBtn.addEventListener('click', ()=> {
+  // show/hide checkout overlay or scroll — here we open the side cart view: toggle display for demo (mobile friendly)
+  document.querySelector('.sidebar')?.scrollIntoView({behavior:'smooth'});
+  toast('เลื่อนมายังตะกร้าทางขวา');
+});
+
+btnClear.addEventListener('click', ()=> {
+  if(confirm('ล้างตะกร้าหรือไม่?')){ cart = []; renderCart(); localStorage.removeItem('demo_cart') }
+});
+
+btnCheckout.addEventListener('click', ()=> {
+  if(!isLoggedIn()){ showAuth(); return; }
+  if(cart.length === 0){ alert('ตะกร้าว่าง'); return; }
+  checkoutOverlay.classList.add('open');
+});
+
+checkoutClose.addEventListener('click', ()=> checkoutOverlay.classList.remove('open'));
+checkoutCancel.addEventListener('click', ()=> checkoutOverlay.classList.remove('open'));
+
+payMethod.addEventListener('change', ()=> {
+  document.getElementById('bankInfo').style.display = payMethod.value === 'bank' ? 'block' : 'none';
+});
+
+/* ---------- On submit checkout ---------- */
+checkoutForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if(cart.length === 0){ alert('ตะกร้าว่าง'); return; }
+  const fullname = document.getElementById('fullName').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const payment = document.getElementById('payMethod').value;
+  if(!fullname || !phone || !address){ alert('กรุณากรอกที่อยู่และข้อมูลให้ครบ'); return; }
+  const order = {
+    id: 'ORD' + Math.floor(Math.random()*900000+100000),
+    user: currentUserEmail(),
+    fullname, phone, address, payment,
+    items: cart, total: cart.reduce((s,i)=>s+i.price*i.qty,0),
+    createdAt: new Date().toISOString()
+  };
+  const orders = JSON.parse(localStorage.getItem('demo_orders') || '[]');
+  orders.push(order);
+  localStorage.setItem('demo_orders', JSON.stringify(orders));
+  // clear cart
+  cart = []; saveCart(); renderCart();
+  checkoutOverlay.classList.remove('open');
+  alert('สั่งซื้อเรียบร้อย! หมายเลขคำสั่งซื้อ: ' + order.id);
+});
+
+/* ---------- Utilities ---------- */
+function toast(text){
+  const el = document.createElement('div');
+  el.textContent = text;
+  el.style.position='fixed'; el.style.left='50%'; el.style.transform='translateX(-50%)';
+  el.style.bottom='22px'; el.style.background='rgba(0,0,0,0.85)'; el.style.color='#fff';
+  el.style.padding='8px 12px'; el.style.borderRadius='10px'; el.style.zIndex=200;
+  document.body.appendChild(el); setTimeout(()=> el.remove(),1400);
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- Init ---------- */
+(function init(){
+  // load cart from storage if present (optional)
+  loadCart();
+  renderProducts();
+  renderCart();
+  renderAuthUI();
+  // don't auto-login (sessionStorage ephemeral): session empty on page open -> user must login each session
+})();
+</script>
+</body>
+</html>
+
